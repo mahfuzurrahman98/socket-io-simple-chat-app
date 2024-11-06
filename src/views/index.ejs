@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Simple Chat App</title>
+        <link rel="stylesheet" href="/style.css" />
+    </head>
+    <body>
+        <div id="chat-container">
+            <!-- Display the current user's socket ID and username -->
+            <p>Your Username: <span id="username"></span></p>
+
+            <ul id="messages"></ul>
+            <form id="chat-form" action="">
+                <input
+                    id="message-input"
+                    autocomplete="off"
+                    placeholder="Type a message..."
+                /><button>Send</button>
+            </form>
+        </div>
+
+        <!-- Socket.IO library -->
+        <script src="/socket.io/socket.io.js"></script>
+        <!-- Client-side JavaScript -->
+        <script>
+            const socket = io();
+
+            // Prompt the user to enter a username
+            let username = prompt("Enter your username:");
+            document.getElementById("username").textContent = username;
+
+            // Display the current user's socket ID
+            let currentUserId;
+            socket.on("connect", () => {
+                currentUserId = socket.id;
+            });
+
+            // Listen for incoming chat messages
+            socket.on("chat-message", ({ msg, userId, senderName }) => {
+                const item = document.createElement("li");
+
+                // Check if the message was sent by the current user
+                if (userId === currentUserId) {
+                    item.textContent = `You: ${msg}`;
+                } else {
+                    item.textContent = `${senderName}: ${msg}`;
+                }
+
+                document.getElementById("messages").appendChild(item);
+            });
+
+            // Handle form submission to send a new chat message
+            document
+                .getElementById("chat-form")
+                .addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    const input = document.getElementById("message-input");
+
+                    // Emit message with userId and username
+                    socket.emit("chat-message", {
+                        msg: input.value,
+                        userId: currentUserId,
+                        senderName: username
+                    });
+                    input.value = "";
+                });
+        </script>
+    </body>
+</html>
